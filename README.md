@@ -29,3 +29,4 @@ The navigation system would take in image data from the cameras and determine th
 
 
 <img src="https://github.com/kanishka-varshini/camera-based-navigation-for-autonomous-mobile-robot/blob/main/Flowchart.png" alt="Flow Chart"/>
+<img src="https://github.com/kanishka-varshini/camera-based-navigation-for-autonomous-mobile-robot/blob/main/IMG-20240821-WA0013.jpg" alt="Rough Sketch"/>
