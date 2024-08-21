@@ -15,6 +15,7 @@ We require an autonomous mobile robot that uses image data from cameras to navig
 The hardware would make up a 3 wheeled land based differentially-steered mobile robot. The major components would include the following:
 
 <li>DC motors (with encoders): 2 for the rear wheels.</li>
+<li>LiPo Battery</li>
 <li>Motor driver</li>
 <li>2 RGB camera modules (to get depth of field)</li>
 <li>1 Raspberry Pi 4</li>
@@ -24,7 +25,7 @@ The hardware would make up a 3 wheeled land based differentially-steered mobile 
 ### Software
 
 The software would involve two systems, the navigation system and the control system.
-The navigation system would take in image data from the cameras and determine the required movement. The control system would determine the speed at which each motor should rotate to achieve the desired movement.
+The navigation system would take in image data from the cameras and determine the required movement. It Converts the dual image data into a depth field and performs SLAM. This is then followed by path planning. The control system would determine the speed at which each motor should rotate to achieve the desired movement and follow the planned path.
 
 
 <img src="https://github.com/kanishka-varshini/camera-based-navigation-for-autonomous-mobile-robot/blob/main/Flowchart.png" alt="Flow Chart"/>
