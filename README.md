@@ -27,4 +27,4 @@ The software would involve two systems, the navigation system and the control sy
 The navigation system would take in image data from the cameras and determine the required movement. The control system would determine the speed at which each motor should rotate to achieve the desired movement.
 
 
-<img src="[https://github.com/kanishka-varshini/camera-based-navigation-for-autonomous-mobile-robot/blob/main/Flowchart.png]" alt="Flow Chart"/>
+<img src="https://github.com/kanishka-varshini/camera-based-navigation-for-autonomous-mobile-robot/blob/main/Flowchart.png" alt="Flow Chart"/>
