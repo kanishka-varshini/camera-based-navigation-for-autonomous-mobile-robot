@@ -10,22 +10,38 @@ Autonomous Mobile Robots (AMRs) are becoming increasingly important in various i
 
 We require an autonomous mobile robot that uses image data from cameras to navigate its surroundings.
 
+### Functionalities
+
+The mobile robot would be able to perform the following:
+<li>Path Planning</li>
+<li>Object Detection</li>
+<li>Obstacle Avoidance</li>
+
+
 ### Hardware
 
 The hardware would make up a 3 wheeled land based differentially-steered mobile robot. The major components would include the following:
 
-<li>DC motors (with encoders): 2 for the rear wheels.</li>
-<li>LiPo Battery</li>
-<li>Motor driver</li>
-<li>2 RGB camera modules (to get depth of field)</li>
-<li>1 Raspberry Pi 4</li>
-<li>1 IMU (MPU 9250)</li>
+<li>Servo motors: 2 for the rear wheels</li>
+<li>LiPo Battery: 1</li>
+<li>Motor driver: 1</li>
+<li>RGB camera modules: 2 to get depth of field</li>
+<li>Raspberry Pi 4: 1</li>
+<li>IMU (MPU 9250): 1</li>
 
 
 ### Software
 
 The software would involve two systems, the navigation system and the control system.
-The navigation system would take in image data from the cameras and determine the required movement. It Converts the dual image data into a depth field and performs SLAM. This is then followed by path planning. The control system would determine the speed at which each motor should rotate to achieve the desired movement and follow the planned path.
+The navigation system would take in raw image data from the cameras and determine the required movement. It converts the dual image data into a depth field and performs SLAM. The generated map is then used to perform path planning. The control system would determine the speed at which each motor should rotate to achieve the desired movement and follow the planned path.
+
+
+## Testing Method :
+
+Upon given a destination, the AMR must navigate through stationary and moving obstacles to reach the destination.
+
+To test the system’s performance, path planning efficiency, object detection accuracy, and obstacle avoidance effectiveness will be analysed. This will be done by conducting multpile trials on the hardware using different algorithms to arrive at the most efficient one.
+
 
 
 <img src="https://github.com/kanishka-varshini/camera-based-navigation-for-autonomous-mobile-robot/blob/main/Flowchart.png" alt="Flow Chart"/>
