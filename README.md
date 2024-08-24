@@ -44,4 +44,4 @@ The navigation system would take in raw image data from the cameras and determin
 
 Upon given a destination, the AMR must navigate through stationary and moving obstacles to reach the destination.
 
-To test the system’s performance, path planning efficiency, object detection accuracy, and obstacle avoidance effectiveness will be analysed. This will be done by conducting multpile trials on the hardware using different algorithms to arrive at the most efficient one.
+To test the system’s performance, path planning efficiency, object detection accuracy, and obstacle avoidance effectiveness will be analysed. This will be done by conducting multiple trials on the hardware using different algorithms to arrive at the most efficient one.
