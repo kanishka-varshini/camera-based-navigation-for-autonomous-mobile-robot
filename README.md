@@ -38,6 +38,7 @@ The navigation system would take in raw image data from the cameras and determin
 
 <img src="https://github.com/kanishka-varshini/camera-based-navigation-for-autonomous-mobile-robot/blob/main/Flowchart.png" alt="Flow Chart"/>
 <img src="https://github.com/kanishka-varshini/camera-based-navigation-for-autonomous-mobile-robot/blob/main/IMG-20240821-WA0013.jpg" alt="Rough Sketch"/>
+<img src="https://github.com/kanishka-varshini/camera-based-navigation-for-autonomous-mobile-robot/blob/main/Components.png" alt="Rough Sketch"/>
 
 
 ## Testing Method :
