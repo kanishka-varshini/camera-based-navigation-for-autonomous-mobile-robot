@@ -36,6 +36,8 @@ https://docs.google.com/spreadsheets/d/1V6J0Lie2oz4PbgF_GIoCCh01dERQ7iK8KUERm-KV
 The software would involve two systems, the navigation system and the control system.
 The navigation system would take in raw image data from the cameras and determine the required movement. It converts the dual image data into a depth field and performs SLAM. The generated map is then used to perform path planning. The control system would determine the speed at which each motor should rotate to achieve the desired movement and follow the planned path.
 
+SLAM reference paper : http://arxiv.org/pdf/1911.04063
+
 
 <img src="https://github.com/kanishka-varshini/camera-based-navigation-for-autonomous-mobile-robot/blob/main/AMR.png" alt="Flow Chart"/>
 <img src="https://github.com/kanishka-varshini/camera-based-navigation-for-autonomous-mobile-robot/blob/main/IMG-20240821-WA0013.jpg" alt="Rough Sketch"/>
