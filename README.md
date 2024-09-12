@@ -53,4 +53,10 @@ To test the system’s performance, path planning efficiency, object detection a
 
 ## Discussions :
 
-Implement weighted average of different algorithms.
+Try weighted average of different algorithms.
+
+## Depth map generation :
+
+### Stereo matching
+
+
