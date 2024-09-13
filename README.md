@@ -57,6 +57,10 @@ Computationally expensive.
 
 <img src="https://github.com/kanishka-varshini/camera-based-navigation-for-autonomous-mobile-robot/blob/main/stereosgbm.png" alt="StereoSGBM output"/>
 
+
+* Stereo algorithms: https://www.cse.psu.edu/~rtc12/CSE486/lecture09.pdf
+
+
 ### Monocular SLAM
 Slow processing.
 
