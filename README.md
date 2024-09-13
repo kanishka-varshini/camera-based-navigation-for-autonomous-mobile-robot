@@ -40,7 +40,6 @@ SLAM reference paper : http://arxiv.org/pdf/1911.04063
 Path planning algorithms performance comparison : https://www.frontiersin.org/journals/neurorobotics/articles/10.3389/fnbot.2020.00063/full 
 
 <img src="https://github.com/kanishka-varshini/camera-based-navigation-for-autonomous-mobile-robot/blob/main/AMR.png" alt="Flow Chart"/>
-<img src="https://github.com/kanishka-varshini/camera-based-navigation-for-autonomous-mobile-robot/blob/main/IMG-20240821-WA0013.jpg" alt="Rough Sketch"/>
 <img src="https://github.com/kanishka-varshini/camera-based-navigation-for-autonomous-mobile-robot/blob/main/Components.png" alt="Rough Sketch"/>
 
 ## Depth map generation :
@@ -63,6 +62,13 @@ Computationally expensive.
 
 ### Monocular SLAM
 Slow processing.
+
+## Depth map to Laser Scan:
+Depth map-
+<img src="https://github.com/kanishka-varshini/camera-based-navigation-for-autonomous-mobile-robot/blob/main/depthmap.png" alt="depth map"/>
+Converting to laser scan at 3/4th of the height of the depth image generated-
+<img src="https://github.com/kanishka-varshini/camera-based-navigation-for-autonomous-mobile-robot/blob/main/laserscan%20polar%20plot.png" alt="laser scan"/>
+
 
 ## Testing Method :
 
