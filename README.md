@@ -43,6 +43,22 @@ Path planning algorithms performance comparison : https://www.frontiersin.org/jo
 <img src="https://github.com/kanishka-varshini/camera-based-navigation-for-autonomous-mobile-robot/blob/main/IMG-20240821-WA0013.jpg" alt="Rough Sketch"/>
 <img src="https://github.com/kanishka-varshini/camera-based-navigation-for-autonomous-mobile-robot/blob/main/Components.png" alt="Rough Sketch"/>
 
+## Depth map generation :
+
+### Stereo block matching
+Local Optimization for each block.
+Suitable for SLAM purposes due to faster speed of computation.
+
+<img src="https://github.com/kanishka-varshini/camera-based-navigation-for-autonomous-mobile-robot/blob/main/stereobm.png" alt="StereoBM output"/>
+
+### Stereo semi-global block matching
+Global constraints give smoothness and coherence.
+Computationally expensive.
+
+<img src="https://github.com/kanishka-varshini/camera-based-navigation-for-autonomous-mobile-robot/blob/main/stereosgbm.png" alt="StereoSGBM output"/>
+
+### Monocular SLAM
+Slow processing.
 
 ## Testing Method :
 
@@ -50,14 +66,13 @@ Upon given a destination, the AMR must navigate through stationary and moving ob
 
 To test the system’s performance, path planning efficiency, object detection accuracy, and obstacle avoidance effectiveness will be analysed. This will be done by conducting multiple trials on the hardware using different algorithms to arrive at the most efficient one.
 
+-Having the bot move in a straight line with obstcles placed along the path.
+-Given a global path, the bot should be able to avoid any stationary obstacle while sticking to the path.
+-Dynamic obstacles.
+
 
 ## Discussions :
 
 Try weighted average of different algorithms.
-
-## Depth map generation :
-
-### Stereo block matching
-
 
 
