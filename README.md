@@ -57,6 +57,7 @@ Try weighted average of different algorithms.
 
 ## Depth map generation :
 
-### Stereo matching
+### Stereo block matching
+
 
 
