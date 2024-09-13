@@ -46,12 +46,14 @@ Path planning algorithms performance comparison : https://www.frontiersin.org/jo
 
 ### Stereo block matching
 Local Optimization for each block.
+
 Suitable for SLAM purposes due to faster speed of computation.
 
 <img src="https://github.com/kanishka-varshini/camera-based-navigation-for-autonomous-mobile-robot/blob/main/stereobm.png" alt="StereoBM output"/>
 
 ### Stereo semi-global block matching
 Global constraints give smoothness and coherence.
+
 Computationally expensive.
 
 <img src="https://github.com/kanishka-varshini/camera-based-navigation-for-autonomous-mobile-robot/blob/main/stereosgbm.png" alt="StereoSGBM output"/>
@@ -64,8 +66,10 @@ Computationally expensive.
 Slow processing.
 
 ## Depth map to Laser Scan:
+
 Depth map-
 <img src="https://github.com/kanishka-varshini/camera-based-navigation-for-autonomous-mobile-robot/blob/main/depthmap.png" alt="depth map"/>
+
 Converting to laser scan at 3/4th of the height of the depth image generated-
 <img src="https://github.com/kanishka-varshini/camera-based-navigation-for-autonomous-mobile-robot/blob/main/laserscan%20polar%20plot.png" alt="laser scan"/>
 
