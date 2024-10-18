@@ -90,3 +90,6 @@ To test the system’s performance, path planning efficiency, object detection a
 Try weighted average of different algorithms.
 
 
+## Updates:
+Trying to figure out the OS on which final development needs to be done. Due to the fact that i am using two Raspberry Pi Camera modules im restricted to use raspberry pi OS which supports the underlying libcamera module libraries that are ONLY available in Pi OS, so i cant use Ubuntu through which i could use a lot of functions/modules/ROS workbench that others have developed, but im forced to develop all this in Raspberry pi OS now. 
+
