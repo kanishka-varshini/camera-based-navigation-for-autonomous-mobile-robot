@@ -80,9 +80,9 @@ Upon given a destination, the AMR must navigate through stationary and moving ob
 
 To test the system’s performance, path planning efficiency, object detection accuracy, and obstacle avoidance effectiveness will be analysed. This will be done by conducting multiple trials on the hardware using different algorithms to arrive at the most efficient one.
 
--Having the bot move in a straight line with obstcles placed along the path.
--Given a global path, the bot should be able to avoid any stationary obstacle while sticking to the path.
--Dynamic obstacles.
+1-Having the bot move in a straight line with obstacles placed along the path. (static and then, dynamic added)
+2-Given a global path, the bot should be able to avoid any stationary obstacle while sticking to the path.
+3-Dynamic obstacles.
 
 
 ## Discussions :
@@ -92,4 +92,12 @@ Try weighted average of different algorithms.
 
 ## Updates:
 Trying to figure out the OS on which final development needs to be done. Due to the fact that i am using two Raspberry Pi Camera modules im restricted to use raspberry pi OS which supports the underlying libcamera module libraries that are ONLY available in Pi OS, so i cant use Ubuntu through which i could use a lot of functions/modules/ROS workbench that others have developed, but im forced to develop all this in Raspberry pi OS now. 
+
+
+## Local path planning
+For testing method 1, DWA (Dynamic Window Approach) can be used. 
+Other methods include- VFH, APF, RRT, SLAM-based, Costmap-based. 
+VHF and DWA are both suitable for stereo cameras, for complex environments-RRT or SLAM-based. 
+Things that can be done- Comparison between these methods. Measure deviation from straight path under the same conditions and positions of obstacle.
+
 
