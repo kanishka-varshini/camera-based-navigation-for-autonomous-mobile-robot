@@ -95,8 +95,8 @@ Trying to figure out the OS on which final development needs to be done. Due to 
 
 
 ## Local path planning
-For testing method 1, DWA (Dynamic Window Approach) can be used. 
-Other methods include- VFH, APF, RRT, SLAM-based, Costmap-based. 
+For testing method 1, obstacle avoidance using a follow the gap method is used.
+Other methods include-DWA, VFH, APF, RRT, SLAM-based, Costmap-based. 
 VHF and DWA are both suitable for stereo cameras, for complex environments-RRT or SLAM-based. 
 Things that can be done- Comparison between these methods. Measure deviation from straight path under the same conditions and positions of obstacle.
 
