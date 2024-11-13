@@ -117,3 +117,13 @@ VHF and DWA are both suitable for stereo cameras.
 
 
 https://github.com/estshorter/dwa/blob/master/dwa.py
+
+
+## SLAM
+ORB_SLAM2 does not require ROS for SLAM. Computational power might be an issue since block matching and A* are already running on the RPi.
+
+### Running ORB-SLAM2, StereoSGBM, and A* on Raspberry Pi 5
+<li>Optimize StereoSGBM: Lower camera resolution and adjust disparity range/block size to reduce CPU load. </li>
+<li>Parallelize Tasks: Use multiprocessing to run ORB-SLAM2, StereoSGBM, and A* on separate CPU cores. </li>
+<li>A Path Planning*: Use coarse grid resolution and recalculate paths intermittently based on obstacle changes.</li>
+<li>Disable Visualizations: Turn off ORB-SLAM2 visualizations unless needed to save processing power.</li>
