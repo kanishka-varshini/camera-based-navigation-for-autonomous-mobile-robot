@@ -99,13 +99,13 @@ Made the two cameras work, collected camera stream and tested the occupancy grid
 
 ## Updates_3
 
-POwering remains an issue, powering the two servos is sorted, using 2 li-ion cells for that , but powering rpi still remains a problem.
+Powering remains an issue, powering the two servos is sorted, using 2 li-ion cells for that , but powering rpi still remains a problem.
 
 ## Updates_4
 
 might have to drop the mapping part of the project as that is VERY difficult. Also , the original problem statement was to create a vision based autonomous mobile robot navigation technique, I think we have acheived that.
 
-## Local path planning
+## Obstacle Avoidance
 For testing method 1, obstacle avoidance using A*:
 
 <img src="https://github.com/kanishka-varshini/camera-based-navigation-for-autonomous-mobile-robot/blob/main/github_1.jpg"/>
