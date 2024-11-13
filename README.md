@@ -106,7 +106,11 @@ POwering remains an issue, powering the two servos is sorted, using 2 li-ion cel
 might have to drop the mapping part of the project as that is VERY difficult. Also , the original problem statement was to create a vision based autonomous mobile robot navigation technique, I think we have acheived that.
 
 ## Local path planning
-For testing method 1, obstacle avoidance using a follow the gap method can be used.
+For testing method 1, obstacle avoidance using A*:
+
+<img src="https://github.com/kanishka-varshini/camera-based-navigation-for-autonomous-mobile-robot/blob/main/github_1.jpg"/>
+<img src="https://github.com/kanishka-varshini/camera-based-navigation-for-autonomous-mobile-robot/blob/main/github_3.jpg"/>
+
 Other methods include-DWA, VFH, APF, RRT, SLAM-based, Costmap-based. 
 VHF and DWA are both suitable for stereo cameras. 
 [ Things that can be done if everything works- Comparison between these methods. Measure deviation from straight path under the same conditions and positions of obstacle. ]
