@@ -109,7 +109,7 @@ might have to drop the mapping part of the project as that is VERY difficult. Al
 For testing method 1, obstacle avoidance using A*:
 
 <img src="https://github.com/kanishka-varshini/camera-based-navigation-for-autonomous-mobile-robot/blob/main/github_1.jpg"/>
-<img src="https://github.com/kanishka-varshini/camera-based-navigation-for-autonomous-mobile-robot/blob/main/github_3.jpg"/>
+<img src="https://github.com/kanishka-varshini/camera-based-navigation-for-autonomous-mobile-robot/blob/main/github_3.png"/>
 
 Other methods include-DWA, VFH, APF, RRT, SLAM-based, Costmap-based. 
 VHF and DWA are both suitable for stereo cameras. 
