@@ -93,6 +93,17 @@ Try weighted average of different algorithms.
 ## Updates:
 Trying to figure out the OS on which final development needs to be done. Due to the fact that i am using two Raspberry Pi Camera modules im restricted to use raspberry pi OS which supports the underlying libcamera module libraries that are ONLY available in Pi OS, so i cant use Ubuntu through which i could use a lot of functions/modules/ROS workbench that others have developed, but im forced to develop all this in Raspberry pi OS now. 
 
+## Updates_2
+
+Made the two cameras work, collected camera stream and tested the occupancy grid approach for obstacle avoidance , works nicely but the frame is dropping badly , need to optimize the code. Also trying to add move_it commands through gpio interface in the same code.
+
+## Updates_3
+
+POwering remains an issue, powering the two servos is sorted, using 2 li-ion cells for that , but powering rpi still remains a problem.
+
+## Updates_4
+
+might have to drop the mapping part of the project as that is VERY difficult. Also , the original problem statement was to create a vision based autonomous mobile robot navigation technique, I think we have acheived that.
 
 ## Local path planning
 For testing method 1, obstacle avoidance using a follow the gap method can be used.
