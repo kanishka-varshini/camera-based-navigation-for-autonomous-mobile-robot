@@ -122,10 +122,6 @@ https://github.com/estshorter/dwa/blob/master/dwa.py
 ## SLAM
 ORB_SLAM2 does not require ROS for SLAM. Computational power might be an issue since block matching and A* are already running on the RPi.
 
-orb slam- https://arxiv.org/pdf/1610.06475
+orb slam reference- https://arxiv.org/pdf/1610.06475
 
-### Running ORB-SLAM2, StereoSGBM, and A* on Raspberry Pi 5
-<li>Optimize StereoSGBM: Lower camera resolution and adjust disparity range/block size to reduce CPU load. </li>
-<li>Parallelize Tasks: Use multiprocessing to run ORB-SLAM2, StereoSGBM, and A* on separate CPU cores. </li>
-<li>A Path Planning*: Use coarse grid resolution and recalculate paths intermittently based on obstacle changes.</li>
-<li>Disable Visualizations: Turn off ORB-SLAM2 visualizations unless needed to save processing power.</li>
+Can run ORB-SLAM2 on the laptop while the rest of the components run on the pi. Commands from laptop can be sent too, by establishing a 2-way connection using Python socket connect.
