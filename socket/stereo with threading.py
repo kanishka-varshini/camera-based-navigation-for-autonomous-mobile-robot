@@ -20,23 +20,28 @@ client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 laptop_ip = '10.7.30.173'  # laptop's IP address 
 laptop_port = 8080  #change
 
+
+
+'''Global Variables '''
+
+
 PATH_CALIB = r'/home/sg/project/Calibration_Files_expm'
 useStream = 1
 
-# Stereo Matcher Parameters
-minDisp = 0     
-nDisp = 50      
-bSize = 9      
-yfloor = 340     
+### Stereo Matcher Parameters
+minDisp = 0     # window position x-offset
+nDisp = 50      # Range of visible depths, larger num takes longer (./16)
+bSize = 9      # Size of search windows, (typ. 7-15, odd # only)
+yfloor = 340     # y-axis pixel location of floor plane (scene-specific)
 
-# Weighted least squares parameters
-lam = 32000    
-sigma = 2.5      
+### Weighted least squares parameters
+lam = 32000    # Regularization param
+sigma = 2.5      # Contrast sensitivity param
 discontinuityRad = 4
 
 params = [minDisp, nDisp, bSize]
 
-# Load Camera Calibration Parameters
+### Load Camera Calibration Parameters
 undistL = np.loadtxt(join(PATH_CALIB, 'umapL.txt'), dtype=np.float32)
 rectifL = np.loadtxt(join(PATH_CALIB, 'rmapL.txt'), dtype=np.float32)
 undistR = np.loadtxt(join(PATH_CALIB, 'umapR.txt'), dtype=np.float32)
@@ -48,32 +53,70 @@ RL = np.loadtxt(join(PATH_CALIB, 'RectifL.txt'), dtype=np.float32)
 CL = np.loadtxt(join(PATH_CALIB, 'CmL.txt'), dtype=np.float32)
 DL = np.loadtxt(join(PATH_CALIB, 'DcL.txt'), dtype=np.float32)
 
-def capture_frames(picam2L, picam2R):
-    while True:
-        imgL = picam2L.capture_array()
-        imgR = picam2R.capture_array()
-        send_data(imgL, imgR)
-        compute_disparity(imgL, imgR, params)
-        time.sleep(0.2)
+''' End Global Variables '''
 
-def send_data(imgL, imgR):
+
+def main():
+    # Initialize the cameras
+    picam2L = Picamera2(camera_num=0)
+    picam2R = Picamera2(camera_num=1)
+
+    # Configure the cameras with the same settings
+    video_config = picam2L.create_video_configuration(main={"size": (640, 480)})
+    picam2L.configure(video_config)
+    picam2R.configure(video_config)
+
+    # Start the cameras
+    picam2L.start()
+    picam2R.start()
+
+    plt.figure(figsize=(16,9))
+
+    #initialize communications between Rpi and laptop
     try:
-        # Encode the images as JPEG to reduce the size
-        _, bufferL = cv.imencode('.jpg', imgL)
-        _, bufferR = cv.imencode('.jpg', imgR)
+        client_socket.connect((laptop_ip, laptop_port))
+        print(f"Connected to the laptop server at {laptop_ip}:{laptop_port}")
 
-        # Serialize the images with pickle
-        data = {'imgL': bufferL.tobytes(), 'imgR': bufferR.tobytes()}
-        serialized_data = pickle.dumps(data)
-
-        # Send the size of the serialized data first (4 bytes for size)
-        data_size = struct.pack('>I', len(serialized_data))
-        client_socket.sendall(data_size)
-
-        # Now send the actual serialized data
-        client_socket.sendall(serialized_data)
     except Exception as e:
-        print(f"An error occurred while sending data to laptop: {e}")
+        print(f"An error occurred with socket connect: {e}")
+
+    # Start a separate thread for processing frames
+    threading.Thread(target=process_frames, args=(picam2L, picam2R), daemon=True).start()
+
+    try:
+        while True:
+            # Update the plots
+            plt.pause(0.2)
+    except KeyboardInterrupt:
+        pass
+    finally:
+        # Stop the cameras
+        picam2L.stop()
+        picam2R.stop()
+        #stop the Rpi-laptop connection
+        client_socket.close()
+        print("Connection closed.")
+
+def process_frames(picam2L, picam2R):
+    try:
+        while True:
+            # Capture frames from both cameras
+            imgL = picam2L.capture_array()
+            imgR = picam2R.capture_array()
+
+            # sending the raw images for orb-slam on laptop
+            send_data(imgL,imgR)
+
+            # Process the frames
+            compute_disparity(imgL, imgR, params)
+    except Exception as e:
+        print(f"Error in processing frames: {e}")
+
+def rescaleROI(src, roi):
+    x, y, w, h = roi
+    dst = src[y:y+h, x:x+w]
+    return dst
+
 
 def compute_disparity(imgL, imgR, params):
     # Convert images from RGB to BGR if necessary
@@ -99,7 +142,7 @@ def compute_disparity(imgL, imgR, params):
     wls = ximgproc.createDisparityWLSFilter(stereoL)
     stereoR = ximgproc.createRightMatcher(stereoL)
     wls.setLambda(lam)
-    wls.setDepthDiscontinuityRadius(discontinuityRad)
+    wls.setDepthDiscontinuityRadius(discontinuityRad)  # Default 4
     wls.setSigmaColor(sigma)
 
     ts1 = time.time()
@@ -111,11 +154,15 @@ def compute_disparity(imgL, imgR, params):
     dispFinal = wls.filter(dispL, imgL, None, dispR)
     dispFinal = ximgproc.getDisparityVis(dispFinal)
 
-    paramsVals = [sigma, lam, stereoL.getNumDisparities(), stereoL.getBlockSize(), stereoL.getPreFilterCap(), stereoL.getSpeckleRange()]
+    paramsVals = [sigma, lam,
+                  stereoL.getNumDisparities(), stereoL.getBlockSize(),
+                  stereoL.getPreFilterCap(), stereoL.getSpeckleRange()]
 
-    points3d = cv.reprojectImageTo3D(dispFinal, Q, ddepth=cv.CV_32F, handleMissingValues=True)
+    points3d = cv.reprojectImageTo3D(
+        dispFinal, Q, ddepth=cv.CV_32F, handleMissingValues=True)
 
     find_path(imgL, nDisp, points3d, dispFinal, cost_sgbm)
+
 
 def find_path(imgL, nDisp, points3d, disparityMap, cost_sgbm):
     np.set_printoptions(suppress=True, precision=3)
@@ -123,6 +170,7 @@ def find_path(imgL, nDisp, points3d, disparityMap, cost_sgbm):
     xx, yy, zz = np.clip(xx, -25, 60), np.clip(yy, -25, 25), np.clip(zz, 0, 100)
 
     obs = zz[yfloor-10:yfloor,:]
+
     obstacles = np.amin(obs, 0, keepdims=False)
     y = np.mgrid[0:np.amax(obstacles), 0:obs.shape[1]][0,:,:]
 
@@ -149,6 +197,7 @@ def find_path(imgL, nDisp, points3d, disparityMap, cost_sgbm):
         print('ERROR: No path found')
 
     coords = np.array([(xp, zp) for xp, zp in path], dtype=np.int32)
+
     yrange = np.geomspace(yy.shape[0]-1, yfloor+1, num=len(path), dtype=np.int32)
     yrange = np.flip(yrange)
 
@@ -157,48 +206,25 @@ def find_path(imgL, nDisp, points3d, disparityMap, cost_sgbm):
     zworld = np.array([zp for _, zp in path], dtype=np.float32)
     zworld = np.interp(zworld, [0, np.amax(zworld)], [25, nDisp])
 
-    cf = np.array([xworld, yworld, zworld]).T
+    cf = np.array([xworld, yworld, zworld])
+    print("pathing finished")
+    return cf
 
-    pr, _ = cv.projectPoints(cf, np.zeros(3), np.zeros(3), CL, DL)
-    pr = np.squeeze(pr, 1)
-    py = pr[:,1]
-    px = pr[:,0]
 
-    fPts = np.array([[-40, 13, nDisp], [40, 13, nDisp], [40, 15, 0], [-40, 15, 0]], dtype=np.float32).T
-    pf, _ = cv.projectPoints(fPts, np.zeros(3).T, np.zeros(3), CL, None)
-    pf = np.squeeze(pf, 1)
+def send_data(left_img, right_img):
+    try:
+        # Serialize the images
+        data = pickle.dumps([left_img, right_img])
 
-    imL = cv.cvtColor(imgL, cv.COLOR_BGR2RGB)
+        # Send the data with its size
+        message_size = struct.pack("L", len(data))
+        client_socket.sendall(message_size)
+        client_socket.sendall(data)
 
-    plt.clf()
-    plt.suptitle('Live Feed')
+        print("Image data sent to laptop.")
+    except Exception as e:
+        print(f"Error in sending data: {e}")
 
-    costStats = '(far_zx, far_zy)=({},{})\ncost_path={:.3f}\ncost_sgbm={:.3f}'.format(far_zx, far_zy, cost_path, cost_sgbm)
-    plt.gcf().text(x=0.6, y=0.05, s=costStats, fontsize='small')
 
-    pathStats = 'steps={}\npathlen={}'.format(runs, len(path))
-    plt.gcf().text(x=0.6, y=0.025, s=pathStats, fontsize='small')
-
-    if len(coords) > 0:
-        plt.plot(px, py, marker='.', markersize=2, label='Path', color='g')
-    else:
-        plt.plot([0], [0], marker='.', markersize=1, color='r')
-
-    plt.plot(pf[:, 0], pf[:, 1], marker='.', markersize=4, label='Far obstacles', color='r')
-
-    plt.imshow(imL)
-    plt.pause(0.05)
-    plt.show()
-
-if __name__ == "__main__":
-    picam2L = Picamera2()
-    picam2R = Picamera2()
-
-    picam2L.configure(picam2L.create_still_configuration())
-    picam2R.configure(picam2R.create_still_configuration())
-
-    picam2L.start()
-    picam2R.start()
-
-    capture_thread = threading.Thread(target=capture_frames, args=(picam2L, picam2R))
-    capture_thread.start()
+if __name__ == '__main__':
+    main()
