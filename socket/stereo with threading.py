@@ -59,31 +59,32 @@ def send_data(imgL, imgR):
         print(f"Error in send_data: {e}")
 
 def process_disparity(imgL, imgR):
-    # Preprocess images (undistort, rectification, etc.)
+    # Convert images to grayscale
     grayL = cv.cvtColor(imgL, cv.COLOR_BGR2GRAY)
     grayR = cv.cvtColor(imgR, cv.COLOR_BGR2GRAY)
 
-    # Stereo Matching
-    stereo = cv.StereoBM_create(numDisparities=50, blockSize=9)
+    # Stereo Matching (using StereoBM for block matching)
+    stereo = cv.StereoBM_create(numDisparities=16, blockSize=15)
     dispL = stereo.compute(grayL, grayR)
 
     # Apply WLS filter for disparity refinement
-    # Create a disparity object for the right image
-    stereo_right = cv.StereoBM_create(numDisparities=50, blockSize=9)
+    # Create the disparity object for the right image
+    stereo_right = cv.StereoBM_create(numDisparities=16, blockSize=15)
     dispR = stereo_right.compute(grayR, grayL)
 
-    # Create the WLS filter
+    # Create WLS filter and apply it
     wls_filter = cv.ximgproc.createDisparityWLSFilter(stereo)
-
-    # Apply the WLS filter
     filtered_disp = wls_filter.filter(dispL, grayL, disparity_map_right=dispR)
 
-    # Normalize and display the filtered disparity map
+    # Normalize disparity for display (original style with color grading)
     dispFinal = cv.normalize(filtered_disp, None, 0, 255, cv.NORM_MINMAX)
     dispFinal = np.uint8(dispFinal)
 
+    # Apply color map (similar to original effect with color grading)
+    dispColor = cv.applyColorMap(dispFinal, cv.COLORMAP_JET)
+
     # Display disparity map
-    cv.imshow('Disparity Map with WLS', dispFinal)
+    cv.imshow('Disparity Map with WLS', dispColor)
 
 def main():
     # Start image capture in a separate thread
