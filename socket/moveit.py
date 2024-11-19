@@ -153,4 +153,5 @@ if __name__ == "__main__":
         print("\nKeyboard Interrupt Detected. Exiting...")
 
     finally:
+        server_socket.close()
         cleanup()
