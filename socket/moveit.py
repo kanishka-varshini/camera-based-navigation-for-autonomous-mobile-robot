@@ -1,5 +1,9 @@
+
 import RPi.GPIO as GPIO
 import time
+import pickle
+import socket
+import struct
 
 # --------------------------- Configuration --------------------------- #
 
@@ -105,18 +109,29 @@ def cleanup():
     print("GPIO Cleanup Completed")
 
 # --------------------------- Main Program --------------------------- #
+# Socket client setup
+HOST = '10.7.30.173'  # Replace with your Raspberry Pi's IP address
+PORT = 8080           # Same port as the server
+
+
 
 if __name__ == "__main__":
+
+    
+    server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    server_socket.bind((HOST, PORT))
+    server_socket.listen(1)  # Allow one client connection
+    print(f"Server listening on {HOST}:{PORT}")
+
+
     try:
         while True:
-            print("\nEnter a command:")
-            print("f: Forward")
-            print("b: Backward")
-            print("l: Turn Left")
-            print("r: Turn Right")
-            print("s: Stop")
-            print("q: Quit")
-            command = input("Command: ").strip().lower()
+
+            command= server_socket.recv(1024).decode('utf-8').strip()
+            if not command:
+                continue
+
+            print(f"Received command: {command}")
 
             if command == 'r':
                 forward()
