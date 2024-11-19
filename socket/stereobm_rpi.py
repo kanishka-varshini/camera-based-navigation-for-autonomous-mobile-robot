@@ -1,4 +1,4 @@
-import threading
+
 from os.path import isfile, join
 import numpy as np
 import cv2 as cv
@@ -16,27 +16,45 @@ import socket
 import pickle
 import struct
 
+import io
+from PIL import Image
+
 client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-laptop_ip = '10.7.26.244'  # laptop's IP address 
+laptop_ip = '10.7.30.173'  # laptop's IP address 
 laptop_port = 8080  #change
+
+
+
+
+'''Global Variables '''
+
+'''
+PATH_L = r'/home/sg/project/L'
+PATH_R = r'/home/sg/project/R'
+'''
 
 PATH_CALIB = r'/home/sg/project/Calibration_Files_expm'
 useStream = 1
 
-# Stereo Matcher Parameters
-minDisp = 0     
-nDisp = 50      
-bSize = 9      
-yfloor = 340     
+### Stereo Matcher Parameters
+minDisp = 0     # window position x-offset
+nDisp = 50      # Range of visible depths, larger num takes longer (./16)
+bSize = 9      # Size of search windows, (typ. 7-15, odd # only)
+P1 = 8*3*bSize**2
+P2 = 32*3*bSize**2
+modeSgbm = cv.StereoSGBM_MODE_SGBM   # Default: cv.StereoSGBM_MODE_SGBM
+pfCap = 0
+sRange = 0
+yfloor = 340     # y-axis pixel location of floor plane (scene-specific)
 
-# Weighted least squares parameters
-lam = 32000    
-sigma = 2.5      
+### Weighted least squares parameters
+lam = 32000    # Regularization param
+sigma = 2.5      # Contrast sensitivity param
 discontinuityRad = 4
 
-params = [minDisp, nDisp, bSize]
+params = [minDisp, nDisp, bSize, pfCap, sRange]
 
-# Load Camera Calibration Parameters
+### Load Camera Calibration Parameters
 undistL = np.loadtxt(join(PATH_CALIB, 'umapL.txt'), dtype=np.float32)
 rectifL = np.loadtxt(join(PATH_CALIB, 'rmapL.txt'), dtype=np.float32)
 undistR = np.loadtxt(join(PATH_CALIB, 'umapR.txt'), dtype=np.float32)
@@ -44,36 +62,64 @@ rectifR = np.loadtxt(join(PATH_CALIB, 'rmapR.txt'), dtype=np.float32)
 roiL = np.loadtxt(join(PATH_CALIB, 'ROIL.txt'), dtype=int)
 roiR = np.loadtxt(join(PATH_CALIB, 'ROIR.txt'), dtype=int)
 Q = np.loadtxt(join(PATH_CALIB, 'Q.txt'), dtype=np.float32)
+#R = np.loadtxt(join(PATH_CALIB, 'Rtn.txt'), dtype=np.float32)
+#T = np.loadtxt(join(PATH_CALIB, 'Trnsl.txt'), dtype=np.float32)
+#PL = np.loadtxt(join(PATH_CALIB, 'ProjL.txt'), dtype=np.float32)
+#PR = np.loadtxt(join(PATH_CALIB, 'ProjR.txt'), dtype=np.float32)
 RL = np.loadtxt(join(PATH_CALIB, 'RectifL.txt'), dtype=np.float32)
 CL = np.loadtxt(join(PATH_CALIB, 'CmL.txt'), dtype=np.float32)
 DL = np.loadtxt(join(PATH_CALIB, 'DcL.txt'), dtype=np.float32)
 
-def capture_frames(picam2L, picam2R):
-    while True:
-        imgL = picam2L.capture_array()
-        imgR = picam2R.capture_array()
-        send_data(imgL, imgR)
-        compute_disparity(imgL, imgR, params)
-        time.sleep(0.2)
+''' End Global Variables '''
 
-def send_data(imgL, imgR):
+
+def main():
+    # Initialize the cameras
+    picam2L = Picamera2(camera_num=0)
+    picam2R = Picamera2(camera_num=1)
+
+    # Configure the cameras with the same settings
+    video_config = picam2L.create_video_configuration(main={"size": (640, 480)})
+    picam2L.configure(video_config)
+    picam2R.configure(video_config)
+
+    # Start the cameras
+    picam2L.start()
+    picam2R.start()
+
+    plt.figure(figsize=(16,9))
+
     try:
-        # Encode the images as JPEG to reduce the size
-        _, bufferL = cv.imencode('.jpg', imgL)
-        _, bufferR = cv.imencode('.jpg', imgR)
+        client_socket.connect((laptop_ip, laptop_port))
+        print(f"Connected to the laptop server at {laptop_ip}:{laptop_port}")
 
-        # Serialize the images with pickle
-        data = {'imgL': bufferL.tobytes(), 'imgR': bufferR.tobytes()}
-        serialized_data = pickle.dumps(data)
-
-        # Send the size of the serialized data first (4 bytes for size)
-        data_size = struct.pack('>I', len(serialized_data))
-        client_socket.sendall(data_size)
-
-        # Now send the actual serialized data
-        client_socket.sendall(serialized_data)
     except Exception as e:
-        print(f"An error occurred while sending data to laptop: {e}")
+        print(f"An error occurred with socket connect: {e}")
+
+    try:
+        while True:
+            # Capture frames from both cameras
+            imgL = picam2L.capture_array()
+            imgR = picam2R.capture_array()
+
+            # Process the frames
+            compute_disparity(imgL, imgR, params)
+            send_figure(plt.gcf())
+
+            # Update the plots
+            plt.pause(0.2)
+    except KeyboardInterrupt:
+        pass
+    finally:
+        # Stop the cameras
+        picam2L.stop()
+        picam2R.stop()
+
+def rescaleROI(src, roi):
+    x, y, w, h = roi
+    dst = src[y:y+h, x:x+w]
+    return dst
+
 
 def compute_disparity(imgL, imgR, params):
     # Convert images from RGB to BGR if necessary
@@ -94,38 +140,62 @@ def compute_disparity(imgL, imgR, params):
     grayL = cv.cvtColor(imgL, cv.COLOR_BGR2GRAY)
     grayR = cv.cvtColor(imgR, cv.COLOR_BGR2GRAY)
 
-    stereoL = cv.StereoBM_create(numDisparities=nDisp, blockSize=bSize)
+    ### Init StereoMatcher with parameters
+    (minDisp, nDisp, bSize, pfCap, sRange) = params
+    stereoL = cv.StereoSGBM_create(
+        minDisparity=minDisp,
+        numDisparities=nDisp,
+        blockSize=bSize,
+        P1=P1,
+        P2=P2,
+        speckleRange=sRange,
+        preFilterCap=pfCap,
+        mode=modeSgbm)
 
+    ### Init WLS Filter with parameters
     wls = ximgproc.createDisparityWLSFilter(stereoL)
     stereoR = ximgproc.createRightMatcher(stereoL)
     wls.setLambda(lam)
-    wls.setDepthDiscontinuityRadius(discontinuityRad)
+    wls.setDepthDiscontinuityRadius(discontinuityRad)  # Default 4
     wls.setSigmaColor(sigma)
 
+    ### Compute raw disparity from both sides
     ts1 = time.time()
     dispL = stereoL.compute(grayL, grayR)
     dispR = stereoR.compute(grayR, grayL)
     ts2 = time.time()
     cost_sgbm = ts2 - ts1
 
+    ### Filter raw disparity using weighted least squares based smoothing
     dispFinal = wls.filter(dispL, imgL, None, dispR)
     dispFinal = ximgproc.getDisparityVis(dispFinal)
 
-    paramsVals = [sigma, lam, stereoL.getNumDisparities(), stereoL.getBlockSize(), stereoL.getPreFilterCap(), stereoL.getSpeckleRange()]
+    paramsVals = [sigma, lam,
+                  stereoL.getNumDisparities(), stereoL.getBlockSize(),
+                  stereoL.getPreFilterCap(), stereoL.getSpeckleRange()]
 
-    points3d = cv.reprojectImageTo3D(dispFinal, Q, ddepth=cv.CV_32F, handleMissingValues=True)
+    ''' Map disparity values to depth as 3D point cloud '''
+    points3d = cv.reprojectImageTo3D(
+        dispFinal, Q, ddepth=cv.CV_32F, handleMissingValues=True)
 
+    ''' Filter obstacles, compute occupancy grid, find path '''
     find_path(imgL, nDisp, points3d, dispFinal, cost_sgbm)
+
+
 
 def find_path(imgL, nDisp, points3d, disparityMap, cost_sgbm):
     np.set_printoptions(suppress=True, precision=3)
     xx, yy, zz = points3d[:,:,0], points3d[:,:,1], points3d[:,:,2]
     xx, yy, zz = np.clip(xx, -25, 60), np.clip(yy, -25, 25), np.clip(zz, 0, 100)
 
+    ''' Filter obstacles above ground/floor plane '''
     obs = zz[yfloor-10:yfloor,:]
+
+    ''' Construct occupancy grid '''
     obstacles = np.amin(obs, 0, keepdims=False)
     y = np.mgrid[0:np.amax(obstacles), 0:obs.shape[1]][0,:,:]
 
+    ### Assign weights to regions (cost low -> high == 0.01 -> 2)
     occupancy_grid = np.where(y >= obstacles, 0, 1)
     occupancy_grid[:, :nDisp+60] = 0
 
@@ -136,6 +206,7 @@ def find_path(imgL, nDisp, points3d, disparityMap, cost_sgbm):
 
     xcenter = 305
 
+    ''' A* path-finding config and computation '''
     mat_grid = Grid(matrix=occupancy_grid)
     start = mat_grid.node(xcenter, 1)
     end = mat_grid.node(far_zx, far_zy)
@@ -148,7 +219,9 @@ def find_path(imgL, nDisp, points3d, disparityMap, cost_sgbm):
     if len(path) == 0:
         print('ERROR: No path found')
 
+    ''' Map X,Y pixel positions to world-frame for cv.projectPoints() '''
     coords = np.array([(xp, zp) for xp, zp in path], dtype=np.int32)
+
     yrange = np.geomspace(yy.shape[0]-1, yfloor+1, num=len(path), dtype=np.int32)
     yrange = np.flip(yrange)
 
@@ -159,46 +232,99 @@ def find_path(imgL, nDisp, points3d, disparityMap, cost_sgbm):
 
     cf = np.array([xworld, yworld, zworld]).T
 
+    ''' Reproject 3D world-frame points back to unrectified 2D points'''
     pr, _ = cv.projectPoints(cf, np.zeros(3), np.zeros(3), CL, DL)
     pr = np.squeeze(pr, 1)
     py = pr[:,1]
     px = pr[:,0]
 
+    ''' Draw Floor Polygon '''
     fPts = np.array([[-40, 13, nDisp], [40, 13, nDisp], [40, 15, 0], [-40, 15, 0]], dtype=np.float32).T
     pf, _ = cv.projectPoints(fPts, np.zeros(3).T, np.zeros(3), CL, None)
     pf = np.squeeze(pf, 1)
 
+    ''' Update figure (final results) '''
+    # Convert imgL from BGR to RGB for plotting
     imL = cv.cvtColor(imgL, cv.COLOR_BGR2RGB)
 
     plt.clf()
     plt.suptitle('Live Feed')
 
-    costStats = '(far_zx, far_zy)=({},{})\ncost_path={:.3f}\ncost_sgbm={:.3f}'.format(far_zx, far_zy, cost_path, cost_sgbm)
+    costStats = '(far_zx, far_zy)=({},{})\ncost_path={:.3f}\ncost_sgbm={:.3f}'.format(
+        far_zx, far_zy, cost_path, cost_sgbm)
     plt.gcf().text(x=0.6, y=0.05, s=costStats, fontsize='small')
 
     pathStats = 'steps={}\npathlen={}'.format(runs, len(path))
-    plt.gcf().text(x=0.6, y=0.025, s=pathStats, fontsize='small')
+    plt.gcf().text(x=0.75, y=0.05, s=pathStats, fontsize='small')
 
-    if len(coords) > 0:
-        plt.plot(px, py, marker='.', markersize=2, label='Path', color='g')
-    else:
-        plt.plot([0], [0], marker='.', markersize=1, color='r')
-
-    plt.plot(pf[:, 0], pf[:, 1], marker='.', markersize=4, label='Far obstacles', color='r')
-
+    plt.subplot(221)
     plt.imshow(imL)
-    plt.pause(0.05)
+    plt.title('Planned Path (Left Camera)')
+    plt.xlim([0, 640])
+    plt.ylim([480, 0])
+    plt.scatter(px, py, s=np.geomspace(70, 5, len(px)), c=cf[:,1],
+                cmap=plt.cm.plasma_r, zorder=99)
+    plt.gca().add_patch(Polygon(pf, fill=True, facecolor=(0,1,0,0.12),
+                                edgecolor=(0,1,0,0.35)))
+
+    ax = plt.gcf().add_subplot(222, projection='3d')
+    ax.azim = 90
+    ax.elev = 110
+    ax.set_box_aspect((4,3,3))
+    ax.plot_surface(xx[100:yfloor,:], yy[100:yfloor,:], zz[100:yfloor,:],
+                    cmap=plt.cm.viridis_r, rcount=25, ccount=25, linewidth=0,
+                    antialiased=False)
+    ax.set_xlabel('Azimuth (X)')
+    ax.set_ylabel('Elevation (Y)')
+    ax.set_zlabel('Depth (Z)')
+    ax.invert_xaxis()
+    ax.invert_zaxis()
+    ax.set_title('Planned Path (wrt. world-frame)')
+    ax.scatter3D(cf[:,0], cf[:,1], cf[:,2], c=cf[:,2], cmap=plt.cm.plasma_r)
+
+    plt.subplot(223)
+    plt.imshow(disparityMap)
+    plt.title('WLS Filtered Disparity Map')
+
+    plt.subplot(224)
+    plt.imshow(occupancy_grid, origin='lower', interpolation='none')
+    plt.title('Occupancy Grid with A* Path')
+    plt.plot(coords[:,0], coords[:,1], 'r')  # Plot A* path over occupancy grid
+
+
+
+def display_disparity(origImg, dispRaw, dispWLS, imgName, paramsVals):
+    ''' Helper function to show figure with some parameters '''
+
+    # Show parameters on figure for debugging
+    paramsText = 'Lambda={}; Sigma={}; nDisp={}; bSize={}; pfCap={}; sRange={}'.format(*paramsVals)
+
+    fig, (ax1, ax2, ax3) = plt.subplots(figsize=(12, 4), ncols=3)
+    #fig.subplots_adjust(hspace=0.3)
+    plt.suptitle(imgName)
+    plt.gcf().text(x=0.1, y=0.05, s=paramsText)
+
+    origImg = cv.cvtColor(origImg, cv.COLOR_BGR2RGB)
+
+    ax1.imshow(origImg, interpolation='none'); ax1.set_title('Original (Left Camera)')
+    pl2 = ax2.imshow(dispRaw, 'gray', interpolation='none'); ax2.set_title('Raw Disparity')
+    pl3 = ax3.imshow(dispWLS, interpolation='none'); ax3.set_title('WLS Filter')
+    
+    cbar2 = fig.colorbar(pl2, ax=ax2, fraction=0.034, pad=0.04)
+    cbar2.minorticks_on()
+    cbar3 = fig.colorbar(pl3, ax=ax3, fraction=0.034, pad=0.04)
+    cbar3.minorticks_on()
+    plt.tight_layout()
     plt.show()
 
-if __name__ == "__main__":
-    picam2L = Picamera2()
-    picam2R = Picamera2()
 
-    picam2L.configure(picam2L.create_still_configuration())
-    picam2R.configure(picam2R.create_still_configuration())
+def send_figure(fig):
+    """Convert matplotlib figure to image and send via socket."""
+    buf = io.BytesIO()
+    fig.savefig(buf, format='png')  # Save figure to buffer
+    buf.seek(0)
+    client_socket.sendall(buf.getvalue())   # Send the image bytes
+    buf.close()
 
-    picam2L.start()
-    picam2R.start()
 
-    capture_thread = threading.Thread(target=capture_frames, args=(picam2L, picam2R))
-    capture_thread.start()
+main()
