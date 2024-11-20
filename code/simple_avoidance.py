@@ -110,7 +110,32 @@ def compute_disparity(imgL, imgR, params):
     stereoL = cv.StereoBM_create(numDisparities=nDisp, blockSize=bSize)
     dispL = stereoL.compute(grayL, grayR)
 
-    points3d = cv.reprojectImageTo3D(dispL, Q, ddepth=cv.CV_32F, handleMissingValues=True)
+     ### Init WLS Filter with parameters
+    wls = ximgproc.createDisparityWLSFilter(stereoL)
+    stereoR = ximgproc.createRightMatcher(stereoL)
+    wls.setLambda(lam)
+    wls.setDepthDiscontinuityRadius(discontinuityRad)  # Default 4
+    wls.setSigmaColor(sigma)
+
+    ### Compute raw disparity from both sides
+    ts1 = time.time()
+    dispL = stereoL.compute(grayL, grayR)
+    dispR = stereoR.compute(grayR, grayL)
+    ts2 = time.time()
+    cost_sgbm = ts2 - ts1
+
+    ### Filter raw disparity using weighted least squares based smoothing
+    dispFinal = wls.filter(dispL, imgL, None, dispR)
+    dispFinal = ximgproc.getDisparityVis(dispFinal)
+
+    paramsVals = [sigma, lam,
+                  stereoL.getNumDisparities(), stereoL.getBlockSize(),
+                  stereoL.getPreFilterCap(), stereoL.getSpeckleRange()]
+
+    ''' Map disparity values to depth as 3D point cloud '''
+    points3d = cv.reprojectImageTo3D(
+        dispFinal, Q, ddepth=cv.CV_32F, handleMissingValues=True)
+    
     return find_path(points3d)
 
 
