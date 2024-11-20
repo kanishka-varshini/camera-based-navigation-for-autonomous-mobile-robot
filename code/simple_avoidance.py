@@ -1,12 +1,10 @@
 import RPi.GPIO as GPIO
-from os.path import isfile, join
+from os.path import join
 import numpy as np
 import cv2 as cv
 from cv2 import ximgproc
-import matplotlib.pyplot as plt
-from matplotlib.patches import Polygon
-from picamera2 import Picamera2
 import time
+from picamera2 import Picamera2
 
 ''' Global Variables '''
 PATH_CALIB = r'/home/sg/project/Calibration_Files_expm'
@@ -20,12 +18,9 @@ P2 = 32 * 3 * bSize ** 2
 modeSgbm = cv.StereoSGBM_MODE_SGBM
 pfCap = 0
 sRange = 0
-yfloor = 340
-
 lam = 32000
 sigma = 2.5
 discontinuityRad = 4
-
 params = [minDisp, nDisp, bSize, pfCap, sRange]
 
 ### Load Camera Calibration Parameters
@@ -36,25 +31,30 @@ rectifR = np.loadtxt(join(PATH_CALIB, 'rmapR.txt'), dtype=np.float32)
 roiL = np.loadtxt(join(PATH_CALIB, 'ROIL.txt'), dtype=int)
 roiR = np.loadtxt(join(PATH_CALIB, 'ROIR.txt'), dtype=int)
 Q = np.loadtxt(join(PATH_CALIB, 'Q.txt'), dtype=np.float32)
-RL = np.loadtxt(join(PATH_CALIB, 'RectifL.txt'), dtype=np.float32)
-CL = np.loadtxt(join(PATH_CALIB, 'CmL.txt'), dtype=np.float32)
-DL = np.loadtxt(join(PATH_CALIB, 'DcL.txt'), dtype=np.float32)
 
 ''' Servo Control Setup '''
-SERVO_PIN = 18  # Change to your servo GPIO pin
+LEFT_SERVO_PIN = 18  # GPIO pin for left servo
+RIGHT_SERVO_PIN = 19  # GPIO pin for right servo
 SERVO_FREQ = 50  # Servo frequency (Hz)
-CENTER_PULSE = 7.5  # Neutral position (adjust based on servo)
-LEFT_PULSE = 10.0   # Leftmost position
-RIGHT_PULSE = 5.0   # Rightmost position
+
+# Define duty cycles for different motions
+FORWARD_PULSE = 7.5  # Neutral position (move forward)
+LEFT_TURN_LEFT_WHEEL = 6.5  # Left wheel backward for left turn
+LEFT_TURN_RIGHT_WHEEL = 8.5  # Right wheel forward for left turn
+RIGHT_TURN_LEFT_WHEEL = 8.5  # Left wheel forward for right turn
+RIGHT_TURN_RIGHT_WHEEL = 6.5  # Right wheel backward for right turn
+STOP_PULSE = 7.5  # Neutral for stopping
 
 GPIO.setmode(GPIO.BCM)
-GPIO.setup(SERVO_PIN, GPIO.OUT)
-servo = GPIO.PWM(SERVO_PIN, SERVO_FREQ)
-servo.start(CENTER_PULSE)  # Start at the neutral position
+GPIO.setup(LEFT_SERVO_PIN, GPIO.OUT)
+GPIO.setup(RIGHT_SERVO_PIN, GPIO.OUT)
 
+left_servo = GPIO.PWM(LEFT_SERVO_PIN, SERVO_FREQ)
+right_servo = GPIO.PWM(RIGHT_SERVO_PIN, SERVO_FREQ)
+left_servo.start(STOP_PULSE)
+right_servo.start(STOP_PULSE)
 
-''' End Global Variables '''
-
+''' Main Program '''
 def main():
     # Initialize the cameras
     picam2L = Picamera2(camera_num=0)
@@ -67,8 +67,6 @@ def main():
     picam2L.start()
     picam2R.start()
 
-    plt.figure(figsize=(16, 9))
-
     try:
         while True:
             # Capture frames from both cameras
@@ -79,17 +77,15 @@ def main():
             steering_command = compute_disparity(imgL, imgR, params)
 
             # Send servo command
-            control_servo(steering_command)
-
-            # Update the plots
-            plt.pause(0.2)
+            control_servos(steering_command)
 
     except KeyboardInterrupt:
         pass
     finally:
         picam2L.stop()
         picam2R.stop()
-        servo.stop()
+        left_servo.stop()
+        right_servo.stop()
         GPIO.cleanup()
         print("Exiting program and cleaning up GPIO.")
 
@@ -108,34 +104,14 @@ def compute_disparity(imgL, imgR, params):
     grayR = cv.cvtColor(imgR, cv.COLOR_BGR2GRAY)
 
     stereoL = cv.StereoBM_create(numDisparities=nDisp, blockSize=bSize)
-    dispL = stereoL.compute(grayL, grayR)
-
-     ### Init WLS Filter with parameters
-    wls = ximgproc.createDisparityWLSFilter(stereoL)
     stereoR = ximgproc.createRightMatcher(stereoL)
-    wls.setLambda(lam)
-    wls.setDepthDiscontinuityRadius(discontinuityRad)  # Default 4
-    wls.setSigmaColor(sigma)
+    wls = ximgproc.createDisparityWLSFilter(stereoL)
 
-    ### Compute raw disparity from both sides
-    ts1 = time.time()
     dispL = stereoL.compute(grayL, grayR)
     dispR = stereoR.compute(grayR, grayL)
-    ts2 = time.time()
-    cost_sgbm = ts2 - ts1
+    dispFiltered = wls.filter(dispL, imgL, None, dispR)
 
-    ### Filter raw disparity using weighted least squares based smoothing
-    dispFinal = wls.filter(dispL, imgL, None, dispR)
-    dispFinal = ximgproc.getDisparityVis(dispFinal)
-
-    paramsVals = [sigma, lam,
-                  stereoL.getNumDisparities(), stereoL.getBlockSize(),
-                  stereoL.getPreFilterCap(), stereoL.getSpeckleRange()]
-
-    ''' Map disparity values to depth as 3D point cloud '''
-    points3d = cv.reprojectImageTo3D(
-        dispFinal, Q, ddepth=cv.CV_32F, handleMissingValues=True)
-    
+    points3d = cv.reprojectImageTo3D(dispFiltered, Q)
     return find_path(points3d)
 
 
@@ -145,23 +121,31 @@ def rescaleROI(src, roi):
 
 
 def find_path(points3d):
-    xx, yy, zz = points3d[:, :, 0], points3d[:, :, 1], points3d[:, :, 2]
-    xx, yy, zz = np.clip(xx, -25, 60), np.clip(yy, -25, 25), np.clip(zz, 0, 100)
-
-    # Compute the straight-line direction
+    zz = np.clip(points3d[:, :, 2], 0, 100)
     center_index = zz.shape[1] // 2
     left_obstacle = np.min(zz[:, :center_index])
     right_obstacle = np.min(zz[:, center_index:])
 
     if left_obstacle > right_obstacle:
-        return LEFT_PULSE  # Turn left
+        return "LEFT"
     elif right_obstacle > left_obstacle:
-        return RIGHT_PULSE  # Turn right
+        return "RIGHT"
     else:
-        return CENTER_PULSE  # Move straight
+        return "FORWARD"
 
 
-def control_servo(command):
-    servo.ChangeDutyCycle(command)
-    print(f"Servo set to pulse: {command}")
-    time.sleep(0.5)  # Small delay for the servo to move
+def control_servos(command):
+    if command == "LEFT":
+        left_servo.ChangeDutyCycle(LEFT_TURN_LEFT_WHEEL)
+        right_servo.ChangeDutyCycle(LEFT_TURN_RIGHT_WHEEL)
+    elif command == "RIGHT":
+        left_servo.ChangeDutyCycle(RIGHT_TURN_LEFT_WHEEL)
+        right_servo.ChangeDutyCycle(RIGHT_TURN_RIGHT_WHEEL)
+    else:  # FORWARD
+        left_servo.ChangeDutyCycle(FORWARD_PULSE)
+        right_servo.ChangeDutyCycle(FORWARD_PULSE)
+    print(f"Command: {command}")
+    time.sleep(0.5)  # Small delay for stability
+
+if __name__ == "__main__":
+    main()
