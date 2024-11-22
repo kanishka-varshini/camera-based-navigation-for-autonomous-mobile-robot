@@ -24,6 +24,7 @@ The hardware would make up a 3 wheeled land based differentially-steered mobile 
 
 <li>Servo motors: 2 for the rear wheels</li>
 <li>LiPo Battery: 1</li>
+<li>Li-ion Battery: 1</li>
 <li>Motor driver: 1</li>
 <li>RGB camera modules: 2 to get depth of field</li>
 <li>Raspberry Pi 4: 1</li>
