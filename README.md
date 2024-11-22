@@ -100,8 +100,8 @@ VHF and DWA are both suitable for stereo cameras and dynamic environment.
 ## Results
 The AMR was able to generate a noise-free and accurate disparity map, and generate A* paths around the obstacles.
 
-
-* Demonstration: <img src="https://github.com/kanishka-varshini/camera-based-navigation-for-autonomous-mobile-robot/blob/main/images/demo1.png"/>
+Demonstration: <img src="https://github.com/kanishka-varshini/camera-based-navigation-for-autonomous-mobile-robot/blob/main/images/demo1.png"/>
+Video Link: https://www.youtube.com/watch?v=tderBI2NBGA 
   
 ## Future Scope
 * Incorporation of Simultaneous Localization and Mapping (SLAM): For improved global navigation and mapping capabilities. The RPi on its own wasn't able to run SLAM as its computational power wasn't enough.
