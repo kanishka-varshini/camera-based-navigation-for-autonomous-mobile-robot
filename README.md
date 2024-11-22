@@ -35,8 +35,8 @@ The hardware would make up a 3 wheeled land based differentially-steered mobile 
 The software would involve two systems, the navigation system and the control system.
 The navigation system would take in raw image data from the cameras and determine the required movement. It converts the dual image data into a depth field and performs SLAM. The generated map is then used to perform path planning. The control system would determine the speed at which each motor should rotate to achieve the desired movement and follow the planned path.
 
-<img src="https://github.com/kanishka-varshini/camera-based-navigation-for-autonomous-mobile-robot/blob/main/AMR.png" alt="Flow Chart"/>
-<img src="https://github.com/kanishka-varshini/camera-based-navigation-for-autonomous-mobile-robot/blob/main/Components.png" alt="Rough Sketch"/>
+<img src="https://github.com/kanishka-varshini/camera-based-navigation-for-autonomous-mobile-robot/blob/main/images/flowchart_final.png" alt="Flow Chart"/>
+<img src="https://github.com/kanishka-varshini/camera-based-navigation-for-autonomous-mobile-robot/blob/main/images/mechatronic_architecture.png" alt="Mechatronic Architecture"/>
 
 ## Depth map generation :
 
@@ -73,7 +73,7 @@ Upon given a destination, the AMR must navigate through stationary and moving ob
 
 To test the system’s performance, path planning efficiency, object detection accuracy, and obstacle avoidance effectiveness will be analysed. This will be done by conducting multiple trials on the hardware using different algorithms to arrive at the most efficient one.
 
-* Having the bot move in a straight line with obstacles placed along the path. (static and then, dynamic added)
+* Having the bot move in a straight line with static obstacles placed along the path.
 * Given a global path, the bot should be able to avoid any stationary obstacle while sticking to the path.
 * Dynamic obstacles.
 
@@ -86,13 +86,13 @@ For testing method 1, obstacle avoidance using A*:
 <img src="https://github.com/kanishka-varshini/camera-based-navigation-for-autonomous-mobile-robot/blob/main/github_3.png"/>
 
 Other methods include-DWA, VFH, APF, RRT, SLAM-based, Costmap-based. 
-VHF and DWA are both suitable for stereo cameras.
+VHF and DWA are both suitable for stereo cameras and dynamic environment.
 
 ## Results
 The AMR was able to generate a noise-free and accurate disparity map, and generate A* paths around the obstacles.
 
 
-* Demonstration: 
+* Demonstration: <img src="https://github.com/kanishka-varshini/camera-based-navigation-for-autonomous-mobile-robot/blob/main/images/demo1.png"/>
   
 ## Future Scope
 * Incorporation of Simultaneous Localization and Mapping (SLAM): For improved global navigation and mapping capabilities. The RPi on its own wasn't able to run SLAM as its computational power wasn't enough.
