@@ -30,8 +30,6 @@ right_wheel_pwm = GPIO.PWM(RIGHT_WHEEL_PIN, PWM_FREQ)
 # Start PWM with neutral position
 left_wheel_pwm.start(STOP_DUTY)
 right_wheel_pwm.start(STOP_DUTY)
-
-# Allow servos to initialize
 time.sleep(1)
 
 # --------------------------- Movement Functions --------------------------- #
