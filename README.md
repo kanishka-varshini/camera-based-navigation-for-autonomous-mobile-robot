@@ -27,7 +27,7 @@ The hardware would make up a 3 wheeled land based differentially-steered mobile 
 <li>Li-ion Battery: 1</li>
 <li>Motor driver: 1</li>
 <li>RGB camera modules: 2 to get depth of field</li>
-<li>Raspberry Pi 4: 1</li>
+<li>Raspberry Pi 5: 1</li>
 
 <img src="https://github.com/kanishka-varshini/camera-based-navigation-for-autonomous-mobile-robot/blob/main/images/mechatronic_architecture.png" alt="Mechatronic Architecture"/>
 
@@ -106,7 +106,7 @@ The AMR was able to generate a noise-free and accurate disparity map, and genera
 ## Future Scope
 * Incorporation of Simultaneous Localization and Mapping (SLAM): For improved global navigation and mapping capabilities. The RPi on its own wasn't able to run SLAM as its computational power wasn't enough.
 * Developing on ROS2: Enables easier communication between different modules of the stereo vision. Can make laptop-RPi communications simpler. The pre-eisting libraries for SLAM, navigationa and control are robust and also allow for any modifications if needed.
-* DWA: https://github.com/estshorter/dwa/blob/master/dwa.py
+* Dynamic Window Avoidance (DWA):For better performance with dynamic environment. (https://github.com/estshorter/dwa/blob/master/dwa.py)
 * Path planning algorithms performance comparison : https://www.frontiersin.org/journals/neurorobotics/articles/10.3389/fnbot.2020.00063/full 
 
 ## References
