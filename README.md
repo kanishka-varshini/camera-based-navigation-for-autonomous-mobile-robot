@@ -27,7 +27,6 @@ The hardware would make up a 3 wheeled land based differentially-steered mobile 
 <li>Motor driver: 1</li>
 <li>RGB camera modules: 2 to get depth of field</li>
 <li>Raspberry Pi 4: 1</li>
-<li>IMU (MPU 9250): 1</li>
 
 
 ### Software
