@@ -1,3 +1,4 @@
+import RPi.GPIO as GPIO
 from os.path import isfile, join
 import numpy as np
 import cv2 as cv
@@ -56,6 +57,18 @@ RL = np.loadtxt(join(PATH_CALIB, 'RectifL.txt'), dtype=np.float32)
 CL = np.loadtxt(join(PATH_CALIB, 'CmL.txt'), dtype=np.float32)
 DL = np.loadtxt(join(PATH_CALIB, 'DcL.txt'), dtype=np.float32)
 
+
+GPIO.setmode(GPIO.BCM)
+GPIO.setup(18, GPIO.OUT)  # Left wheel
+GPIO.setup(17, GPIO.OUT)  # Right wheel
+
+left_wheel = GPIO.PWM(18, 50)  # Set up PWM on pin 18
+right_wheel = GPIO.PWM(17, 50)  # Set up PWM on pin 17
+
+left_wheel.start(0)  # Initialize with 0 duty cycle
+right_wheel.start(0)
+
+
 ''' End Global Variables '''
 
 
@@ -92,12 +105,73 @@ def main():
         # Stop the cameras
         picam2L.stop()
         picam2R.stop()
+        GPIO.cleanup()
 
 def rescaleROI(src, roi):
     x, y, w, h = roi
     dst = src[y:y+h, x:x+w]
     return dst
 
+
+def move_forward():
+    left_wheel.ChangeDutyCycle(7.5)  # Forward for left wheel
+    right_wheel.ChangeDutyCycle(7.5)  # Forward for right wheel
+    time.sleep(0.5)
+    stop()
+
+
+def move_backward():
+    left_wheel.ChangeDutyCycle(5.5)  # Backward for left wheel
+    right_wheel.ChangeDutyCycle(5.5)  # Backward for right wheel
+    time.sleep(0.5)
+    stop()
+
+
+def move_left():
+    left_wheel.ChangeDutyCycle(5.5)  # Backward for left wheel
+    right_wheel.ChangeDutyCycle(7.5)  # Forward for right wheel
+    time.sleep(0.5)
+    stop()
+
+
+def move_right():
+    left_wheel.ChangeDutyCycle(7.5)  # Forward for left wheel
+    right_wheel.ChangeDutyCycle(5.5)  # Backward for right wheel
+    time.sleep(0.5)
+    stop()
+
+
+def stop():
+    left_wheel.ChangeDutyCycle(0)
+    right_wheel.ChangeDutyCycle(0)
+
+
+def navigate_path(path):
+    """Navigate the robot based on the computed path."""
+    for i in range(1, len(path)):
+        x_diff = path[i][0] - path[i - 1][0]
+        y_diff = path[i][1] - path[i - 1][1]
+
+        if x_diff > 0:
+            move_right()
+        elif x_diff < 0:
+            move_left()
+        elif y_diff > 0:
+            move_forward()
+        elif y_diff < 0:
+            move_backward()
+
+
+# Existing code integration with the movement functions
+def find_path(imgL, nDisp, points3d, disparityMap, cost_sgbm):
+    # (Existing logic from your `find_path` function)
+    # At the end of the function:
+    path, runs = finder.find_path(start, end, mat_grid)
+
+    if len(path) == 0:
+        print('ERROR: No path found')
+    else:
+        navigate_path(path)  # Trigger robot movement based on the computed path
 
 def compute_disparity(imgL, imgR, params):
     # Convert images from RGB to BGR if necessary
