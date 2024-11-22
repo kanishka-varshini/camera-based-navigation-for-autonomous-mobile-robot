@@ -28,16 +28,25 @@ The hardware would make up a 3 wheeled land based differentially-steered mobile 
 <li>RGB camera modules: 2 to get depth of field</li>
 <li>Raspberry Pi 4: 1</li>
 
-
-### Software
-
-The software would involve two systems, the navigation system and the control system.
-The navigation system would take in raw image data from the cameras and determine the required movement. It converts the dual image data into a depth field and performs SLAM. The generated map is then used to perform path planning. The control system would determine the speed at which each motor should rotate to achieve the desired movement and follow the planned path.
-
-<img src="https://github.com/kanishka-varshini/camera-based-navigation-for-autonomous-mobile-robot/blob/main/images/flowchart_final.png" alt="Flow Chart"/>
 <img src="https://github.com/kanishka-varshini/camera-based-navigation-for-autonomous-mobile-robot/blob/main/images/mechatronic_architecture.png" alt="Mechatronic Architecture"/>
 
-## Depth map generation :
+
+### Software
+#### Stereo vision : 
+Stereo vision is a system that uses two cameras placed at a fixed distance apart to capture two images of the same scene from slightly different perspectives. This allows the computation of the distance between objects based on their disparity, providing depth perception and spatial information.
+
+It works by matching key features in the left and right images that are vertically aligned. That is, the y-coordinate of the feature must be the same in both the left and riht image streams. This is not possible to achieve by manufacturing alone and thus, rectification is needed.
+
+* Stereo Rectification: This reprojects the left and right image planes onto a common plane parallel to the line between the centre of the two cameras. This makes sure that the image streams are vertically aligned.
+  <img src="https://upload.wikimedia.org/wikipedia/commons/0/02/Lecture_1027_stereo_01.jpg" alt="Stereo Rectification"/>
+  Image src: https://upload.wikimedia.org/wikipedia/commons/0/02/Lecture_1027_stereo_01.jpg 
+
+* Disparity Map Generation: The rectified images are sent to the disparity map computing function, where the disparity(difference in the x-coordinates) between the lft and right camea outputs are calculated and then sent to a WLS filter to reduce noise.
+* Depth Map Reprojection: The disparity map, along with the intrinsic camera values are used to estimate depth map of the environment. The objects that are closer to the cameras have a higher disparity than those farther away.
+* Occupancy Grid: A binary occupancy grid is generated for a specified portion of the depth map to determine the empty spaces and occupied grids.
+* A* path planning: This generates the optimal path of motion by taking the start point of the robot's Left camera frame and the destination as the furthest unoccupied point in the occupancy grid. Commands are then sent to the Servo motors to achieve obstacle avoidance.
+
+<img src="https://github.com/kanishka-varshini/camera-based-navigation-for-autonomous-mobile-robot/blob/main/images/flowchart_final.png" alt="Flow Chart"/>
 
 ### Stereo block matching
 Local Optimization for each block.
