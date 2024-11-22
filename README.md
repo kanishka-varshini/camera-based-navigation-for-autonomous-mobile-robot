@@ -28,16 +28,12 @@ The hardware would make up a 3 wheeled land based differentially-steered mobile 
 <li>RGB camera modules: 2 to get depth of field</li>
 <li>Raspberry Pi 4: 1</li>
 <li>IMU (MPU 9250): 1</li>
-https://docs.google.com/spreadsheets/d/1V6J0Lie2oz4PbgF_GIoCCh01dERQ7iK8KUERm-KVPIc/edit?gid=0#gid=0
 
 
 ### Software
 
 The software would involve two systems, the navigation system and the control system.
 The navigation system would take in raw image data from the cameras and determine the required movement. It converts the dual image data into a depth field and performs SLAM. The generated map is then used to perform path planning. The control system would determine the speed at which each motor should rotate to achieve the desired movement and follow the planned path.
-
-SLAM reference paper : http://arxiv.org/pdf/1911.04063
-Path planning algorithms performance comparison : https://www.frontiersin.org/journals/neurorobotics/articles/10.3389/fnbot.2020.00063/full 
 
 <img src="https://github.com/kanishka-varshini/camera-based-navigation-for-autonomous-mobile-robot/blob/main/AMR.png" alt="Flow Chart"/>
 <img src="https://github.com/kanishka-varshini/camera-based-navigation-for-autonomous-mobile-robot/blob/main/Components.png" alt="Rough Sketch"/>
@@ -58,12 +54,9 @@ Computationally expensive.
 
 <img src="https://github.com/kanishka-varshini/camera-based-navigation-for-autonomous-mobile-robot/blob/main/stereosgbm.png" alt="StereoSGBM output"/>
 
-
-* Stereo algorithms: https://www.cse.psu.edu/~rtc12/CSE486/lecture09.pdf
-
-
 ### Monocular SLAM
 Slow processing.
+
 
 ## Depth map to Laser Scan:
 
@@ -80,30 +73,11 @@ Upon given a destination, the AMR must navigate through stationary and moving ob
 
 To test the system’s performance, path planning efficiency, object detection accuracy, and obstacle avoidance effectiveness will be analysed. This will be done by conducting multiple trials on the hardware using different algorithms to arrive at the most efficient one.
 
-1-Having the bot move in a straight line with obstacles placed along the path. (static and then, dynamic added)
-2-Given a global path, the bot should be able to avoid any stationary obstacle while sticking to the path.
-3-Dynamic obstacles.
+* Having the bot move in a straight line with obstacles placed along the path. (static and then, dynamic added)
+* Given a global path, the bot should be able to avoid any stationary obstacle while sticking to the path.
+* Dynamic obstacles.
 
 
-## Discussions :
-
-Try weighted average of different algorithms.
-
-
-## Updates:
-Trying to figure out the OS on which final development needs to be done. Due to the fact that i am using two Raspberry Pi Camera modules im restricted to use raspberry pi OS which supports the underlying libcamera module libraries that are ONLY available in Pi OS, so i cant use Ubuntu through which i could use a lot of functions/modules/ROS workbench that others have developed, but im forced to develop all this in Raspberry pi OS now. 
-
-## Updates_2
-
-Made the two cameras work, collected camera stream and tested the occupancy grid approach for obstacle avoidance , works nicely but the frame is dropping badly , need to optimize the code. Also trying to add move_it commands through gpio interface in the same code.
-
-## Updates_3
-
-Powering remains an issue, powering the two servos is sorted, using 2 li-ion cells for that , but powering rpi still remains a problem.
-
-## Updates_4
-
-might have to drop the mapping part of the project as that is VERY difficult. Also , the original problem statement was to create a vision based autonomous mobile robot navigation technique, I think we have acheived that.
 
 ## Obstacle Avoidance
 For testing method 1, obstacle avoidance using A*:
@@ -112,16 +86,25 @@ For testing method 1, obstacle avoidance using A*:
 <img src="https://github.com/kanishka-varshini/camera-based-navigation-for-autonomous-mobile-robot/blob/main/github_3.png"/>
 
 Other methods include-DWA, VFH, APF, RRT, SLAM-based, Costmap-based. 
-VHF and DWA are both suitable for stereo cameras. 
-[ Things that can be done if everything works- Comparison between these methods. Measure deviation from straight path under the same conditions and positions of obstacle. ]
+VHF and DWA are both suitable for stereo cameras.
+
+## Results
+The AMR was able to generate a noise-free and accurate disparity map, and generate A* paths around the obstacles.
 
 
-https://github.com/estshorter/dwa/blob/master/dwa.py
+* Demonstration: 
+  
+## Future Scope
+* Incorporation of Simultaneous Localization and Mapping (SLAM): For improved global navigation and mapping capabilities. The RPi on its own wasn't able to run SLAM as its computational power wasn't enough.
+* Developing on ROS2: Enables easier communication between different modules of the stereo vision. Can make laptop-RPi communications simpler. The pre-eisting libraries for SLAM, navigationa and control are robust and also allow for any modifications if needed.
+* DWA: https://github.com/estshorter/dwa/blob/master/dwa.py
+* Path planning algorithms performance comparison : https://www.frontiersin.org/journals/neurorobotics/articles/10.3389/fnbot.2020.00063/full 
+
+## References
+
+* Stereo- rectification and disparity map generation: https://learnopencv.com/making-a-low-cost-stereo-camera-using-opencv/
+* Stereo algorithms: https://www.cse.psu.edu/~rtc12/CSE486/lecture09.pdf
+
+All codes were edited, integrated and debugged with the help of ChatGPT. 
 
 
-## SLAM
-ORB_SLAM2 does not require ROS for SLAM. Computational power might be an issue since block matching and A* are already running on the RPi.
-
-orb slam reference- https://arxiv.org/pdf/1610.06475
-
-Can run ORB-SLAM2 on the laptop while the rest of the components run on the pi. Commands from laptop can be sent too, by establishing a 2-way connection using Python socket connect.
