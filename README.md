@@ -41,7 +41,7 @@ It works by matching key features in the left and right images that are vertical
   <img src="https://upload.wikimedia.org/wikipedia/commons/0/02/Lecture_1027_stereo_01.jpg" alt="Stereo Rectification"/>
   Image src: https://upload.wikimedia.org/wikipedia/commons/0/02/Lecture_1027_stereo_01.jpg 
 
-* Disparity Map Generation: The rectified images are sent to the disparity map computing function, where the disparity(difference in the x-coordinates) between the lft and right camea outputs are calculated and then sent to a WLS filter to reduce noise.
+* Disparity Map Generation: The rectified images are sent to the disparity map computing function, where the disparity(difference in the x-coordinates) between the left and right camea outputs are computed using a Stereo block matching algorithm and then sent to a WLS filter to reduce noise.
 * Depth Map Reprojection: The disparity map, along with the intrinsic camera values are used to estimate depth map of the environment. The objects that are closer to the cameras have a higher disparity than those farther away.
 * Occupancy Grid: A binary occupancy grid is generated for a specified portion of the depth map to determine the empty spaces and occupied grids.
 * A* path planning: This generates the optimal path of motion by taking the start point of the robot's Left camera frame and the destination as the furthest unoccupied point in the occupancy grid. Commands are then sent to the Servo motors to achieve obstacle avoidance.
